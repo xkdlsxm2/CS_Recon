@@ -6,29 +6,19 @@ from typing import Tuple
 import sigpy.plot as pl
 import matplotlib.pyplot as plt
 import torch.fft
-import io, os
+import matplotlib.colors as colors
 
 
-class CPU_Unpickler(pickle.Unpickler):
-    def find_class(self, module, name):
-        if module == 'torch.storage' and name == '_load_from_bytes':
-            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-        else:
-            return super().find_class(module, name)
+def get_files(directory: pathlib.Path):
+    files = pickle.load(open(r"C:\Users\z0048drc\Desktop\fastmri\dataset_cache.pkl", 'rb'))
+    keys = list(files.keys())
 
-
-def searching_all_files(directory: pathlib.Path):
-    file_list = []  # A list for storing files existing in directories
-
-    for item in os.listdir(directory):
-        file_list.append(directory / item)
-
-    return np.array(file_list)
+    return np.array(files[keys[-1]])
 
 def kdata_torch2numpy(kdata_torch: torch.Tensor):
     kdata_np = kdata_torch.detach().cpu().numpy()
 
-    return (kdata_np[..., 0] + 1j * kdata_np[..., 1]).squeeze(0)
+    return (kdata_np[..., 0] + 1j * kdata_np[..., 1])
 
 
 def center_crop(data: np, shape: Tuple[int, int]) -> np:
@@ -43,15 +33,13 @@ def center_crop(data: np, shape: Tuple[int, int]) -> np:
     return data[..., w_from:w_to, h_from:h_to]
 
 
-def save(path, objs):
-    sens_map_pkl_path = pathlib.Path(f"Sens_maps/{path.stem}_sens_map.pkl")
-    sens_map_png_path = sens_map_pkl_path.with_suffix(".png")
+def save(fname, objs):
+    sens_map_pkl_path = pathlib.Path(f"Sens_maps/{fname}_sens_map.pkl")
     names = ["sens_map", "CG-SENSE"]
 
     pickle.dump(objs[0], open(sens_map_pkl_path, 'wb'))
-    pl.ImagePlot(objs[0], z=0, hide_axes=True, save_path=sens_map_png_path)
 
-    recon_path = f"Recon/{path.stem}"
+    recon_path = f"Recon/{fname}"
     for name, obj in zip(names[1:], objs[1:]):
         pkl_path = pathlib.Path(recon_path + "_" + name + ".pkl")
         png_path = pkl_path.with_suffix(".png")
@@ -224,3 +212,28 @@ def rss(data: torch.Tensor, dim: int = 0) -> torch.Tensor:
         The RSS value.
     """
     return torch.sqrt((data ** 2).sum(dim))
+
+
+def imshow1row(imgs, titles=None, isMag=True, filename=None, log=False, suptitle=None, norm=1):
+    f, a = plt.subplots(1, len(imgs))
+    titles = [None] * len(imgs) if titles is None else titles
+
+    for i, (img, title) in enumerate(zip(imgs, titles)):
+        if torch.is_tensor(img):
+            img = img[0, 0, :, :, 0] + img[0, 0, :, :, 1] * 1j
+            img = img.cpu().numpy()
+        ax = a[i] if len(imgs) >= 2 else a
+        img = abs(img) if isMag else img
+        img = np.log(img) if log else img
+        ax.imshow(img, cmap='gray', norm=colors.PowerNorm(gamma=norm))
+        ax.axis('off')
+        ax.set_title(title)
+
+    f.suptitle(suptitle) if suptitle is not None else f.suptitle("")
+    if filename is None:
+        plt.show()
+    elif filename is not None:
+        figure = plt.gcf()  # get current figure
+        figure.set_size_inches(28, 14)
+        plt.savefig(filename, bbox_inches='tight')
+    plt.close(f)
