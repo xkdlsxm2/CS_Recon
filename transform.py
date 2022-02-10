@@ -407,8 +407,9 @@ class VarNetDataTransform:
     ) -> VarNetSample:
 
         kspace_torch = to_tensor(kspace)
+        ground_truth = to_tensor(target)
         seed = None if not self.use_seed else tuple(map(ord, fname))
 
         kspace_us, mask_torch, num_low_frequencies = apply_mask(kspace_torch, self.mask_func, seed=seed)
 
-        return kspace_us
+        return kspace_us, ground_truth

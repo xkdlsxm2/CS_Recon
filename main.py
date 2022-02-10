@@ -21,7 +21,7 @@ if __name__ == "__main__":
     indices = list(np.linspace(0, len(files), NUM_LOG_IMAGES).astype(int))[:-1]
     for file in files[indices]:
         fname, dataslice, metadata = file
-        name = f"{fname.stem}_{str(dataslice)}"
+        name = f"{str(dataslice)}_{fname.stem}"
 
         print(f"{name} start!")
 
@@ -35,25 +35,33 @@ if __name__ == "__main__":
             attrs.update(metadata)
 
             kspace_torch = to_tensor(kspace)
+
             seed = tuple(map(ord, fname.name))
 
             kspace_us = apply_mask(kspace_torch, mask, seed=seed)
 
+            gt = {"ground_truth": to_tensor(target),
+                  "max_val": attrs["max"]}
         input_k = kdata_torch2numpy(kspace_us)
-
 
         sens_map_pkl_path = pathlib.Path(f"Sens_maps/{name}_sens_map.pkl")
         if sens_map_pkl_path.exists():
-            print(f"{name} is already processed!\n\n")
-            continue
+            print(f"{name}_sens_map is already processed!\n\n")
+            sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
         else:
             print("Start to estimate sems_map...")
             sens_map = mr.app.EspiritCalib(input_k).run()
+            save_sens_map(name, sens_map)
             print("Estimate sens_map done...")
 
-            print("Start to recon...")
+        recon_pkl_path = pathlib.Path(f"Recon/pkl/{name}_CG-SENSE.pkl")
+        if recon_pkl_path.exists():
+            print(f"{name}_CG-SENSE is already processed!\n\n")
+
+        else:
+            print("Start to reconstruction...")
             sense_recon = mr.app.SenseRecon(input_k.copy(), sens_map.copy(), lamda=0.01).run()
             sense_recon = center_crop(sense_recon, CROP_SIZE)
-            save(name, [sens_map, sense_recon])
+            save_recon(name, sense_recon, gt)
             print("Recon done...")
             print(f"{name} done!\n\n")

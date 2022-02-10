@@ -7,6 +7,7 @@ import sigpy.plot as pl
 import matplotlib.pyplot as plt
 import torch.fft
 import matplotlib.colors as colors
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 
 def get_files(directory: pathlib.Path):
@@ -33,18 +34,27 @@ def center_crop(data: np, shape: Tuple[int, int]) -> np:
     return data[..., w_from:w_to, h_from:h_to]
 
 
-def save(fname, objs):
+def save_sens_map(fname, sens_map):
     sens_map_pkl_path = pathlib.Path(f"Sens_maps/{fname}_sens_map.pkl")
-    names = ["sens_map", "CG-SENSE"]
 
-    pickle.dump(objs[0], open(sens_map_pkl_path, 'wb'))
+    pickle.dump(sens_map, open(sens_map_pkl_path, 'wb'))
 
-    recon_path = f"Recon/{fname}"
-    for name, obj in zip(names[1:], objs[1:]):
-        pkl_path = pathlib.Path(recon_path + "_" + name + ".pkl")
-        png_path = pkl_path.with_suffix(".png")
-        pickle.dump(obj, open(pkl_path, 'wb'))
-        imsave(obj, png_path)
+
+def save_recon(fname, CG_SENSE, ground_truth):
+    recon_pkl_path = pathlib.Path(f"Recon/pkl")
+    recon_png_path = pathlib.Path(f"Recon/png")
+    recon_pkl_path.mkdir(exist_ok=True, parents=True)
+    recon_png_path.mkdir(exist_ok=True, parents=True)
+
+    pkl_path = recon_pkl_path / f"{fname}_CG-SENSE.pkl"
+    png_path = recon_png_path / f"{fname}_CG-SENSE.png"
+    pickle.dump(CG_SENSE, open(pkl_path, 'wb'))
+    imsave(CG_SENSE, png_path)
+
+    GT_path = pathlib.Path(f"Recon/GT")
+    GT_path.mkdir(exist_ok=True, parents=True)
+    gt_path = GT_path / f"{fname}_GT.pkl"
+    pickle.dump(ground_truth, open(gt_path, 'wb'))
 
 
 def imsave(obj, path):
@@ -56,6 +66,31 @@ def imsave(obj, path):
     plt.savefig(path, bbox_inches='tight')
     plt.close()
 
+def fft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
+    """
+    Apply centered 2 dimensional Fast Fourier Transform.
+
+    Args:
+        data: Complex valued input data containing at least 3 dimensions:
+            dimensions -3 & -2 are spatial dimensions and dimension -1 has size
+            2. All other dimensions are assumed to be batch dimensions.
+        norm: Normalization mode. See ``torch.fft.fft``.
+
+    Returns:
+        The FFT of the input.
+    """
+    if not data.shape[-1] == 2:
+        raise ValueError("Tensor does not have separate complex dim.")
+
+    data = ifftshift(data, dim=[-3, -2])
+    data = torch.view_as_real(
+        torch.fft.fftn(  # type: ignore
+            torch.view_as_complex(data), dim=(-2, -1), norm=norm
+        )
+    )
+    data = fftshift(data, dim=[-3, -2])
+
+    return data
 
 def ifft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
     """
@@ -237,3 +272,22 @@ def imshow1row(imgs, titles=None, isMag=True, filename=None, log=False, suptitle
         figure.set_size_inches(28, 14)
         plt.savefig(filename, bbox_inches='tight')
     plt.close(f)
+
+
+def ssim(
+    gt: np.ndarray, pred: np.ndarray, maxval=None) -> np.ndarray:
+    """Compute Structural Similarity Index Metric (SSIM)"""
+    if not gt.ndim == 3:
+        raise ValueError("Unexpected number of dimensions in ground truth.")
+    if not gt.ndim == pred.ndim:
+        raise ValueError("Ground truth dimensions does not match pred.")
+
+    maxval = gt.max() if maxval is None else maxval
+
+    ssim = np.array([0])
+    for slice_num in range(gt.shape[0]):
+        ssim = ssim + structural_similarity(
+            gt[slice_num], pred[slice_num], data_range=maxval
+        )
+
+    return ssim / gt.shape[0]
