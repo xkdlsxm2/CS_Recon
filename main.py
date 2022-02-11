@@ -51,7 +51,7 @@ if __name__ == "__main__":
         else:
             print("Start to estimate sens_map...")
             sens_map = mr.app.EspiritCalib(input_k).run()
-            save_sens_map(name, sens_map)
+            save_sens_map(name, sens_map, sub_folder=f"R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}")
             print("Estimate sens_map done...")
 
         recon_pkl_path = pathlib.Path(f"Recon/pkl/{name}_CG-SENSE.pkl")
@@ -62,6 +62,6 @@ if __name__ == "__main__":
             print("Start to reconstruction...")
             sense_recon = mr.app.SenseRecon(input_k.copy(), sens_map.copy(), lamda=0.01).run()
             sense_recon = center_crop(sense_recon, CROP_SIZE)
-            save_recon(name, sense_recon, gt)
+            save_recon(name, sense_recon, gt, sub_folder=f"R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}")
             print("Recon done...")
             print(f"{name} done!\n\n")

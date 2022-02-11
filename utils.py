@@ -34,16 +34,18 @@ def center_crop(data: np, shape: Tuple[int, int]) -> np:
     return data[..., w_from:w_to, h_from:h_to]
 
 
-def save_sens_map(fname, sens_map):
+def save_sens_map(fname, sens_map, sub_folder):
 
-    sens_map_pkl_path = pathlib.Path(f"Sens_maps/{fname}_sens_map.pkl")
+    sens_map_pkl_path = pathlib.Path(f"/Results/{sub_folder}/Sens_maps")
+    sens_map_pkl_path.mkdir(exist_ok=True, parents=True)
+    sens_map_pkl_path = sens_map_pkl_path / f"{fname}_sens_map.pkl"
 
     pickle.dump(sens_map, open(sens_map_pkl_path, 'wb'))
 
 
-def save_recon(fname, CG_SENSE, ground_truth):
-    recon_pkl_path = pathlib.Path(f"Recon/pkl")
-    recon_png_path = pathlib.Path(f"Recon/png")
+def save_recon(fname, CG_SENSE, ground_truth, sub_folder):
+    recon_pkl_path = pathlib.Path(f"Results/{sub_folder}/Recon/pkl")
+    recon_png_path = pathlib.Path(f"Results/{sub_folder}/Recon/png")
     recon_pkl_path.mkdir(exist_ok=True, parents=True)
     recon_png_path.mkdir(exist_ok=True, parents=True)
 
@@ -52,7 +54,7 @@ def save_recon(fname, CG_SENSE, ground_truth):
     pickle.dump(CG_SENSE, open(pkl_path, 'wb'))
     imsave(CG_SENSE, png_path)
 
-    GT_path = pathlib.Path(f"Recon/GT")
+    GT_path = pathlib.Path(f"Recon/{sub_folder}/GT")
     GT_path.mkdir(exist_ok=True, parents=True)
     gt_path = GT_path / f"{fname}_GT.pkl"
     pickle.dump(ground_truth, open(gt_path, 'wb'))
