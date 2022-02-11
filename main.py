@@ -11,17 +11,17 @@ DATA_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\fastmri\dataset_cache.pkl")
 CROP_SIZE = (320, 320)
 NUM_LOG_IMAGES = 16
 MASK_TYPE = "equispaced"
-ACCELERATION = 4
-NUM_LOW_FREQUENCIES = 24
+ACCELERATION = 2
+NUM_LOW_FREQUENCIES = 32
 
 if __name__ == "__main__":
     files = get_files(DATA_PATH)
 
     # [:-1] => just make the same as training method, which was mistake.
     indices = list(np.linspace(0, len(files), NUM_LOG_IMAGES).astype(int))[:-1]
-    for file in files[indices]:
-        fname, dataslice, metadata = file
-        name = f"{str(dataslice)}_{fname.stem}"
+    for index in indices:
+        fname, dataslice, metadata = files[index]
+        name = f"{str(index)}_{fname.stem}_R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}"
 
         print(f"{name} start!")
 
@@ -46,10 +46,10 @@ if __name__ == "__main__":
 
         sens_map_pkl_path = pathlib.Path(f"Sens_maps/{name}_sens_map.pkl")
         if sens_map_pkl_path.exists():
-            print(f"{name}_sens_map is already processed!\n\n")
+            print(f"{name}_sens_map is already processed!")
             sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
         else:
-            print("Start to estimate sems_map...")
+            print("Start to estimate sens_map...")
             sens_map = mr.app.EspiritCalib(input_k).run()
             save_sens_map(name, sens_map)
             print("Estimate sens_map done...")
