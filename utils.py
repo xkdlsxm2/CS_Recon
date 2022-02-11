@@ -11,7 +11,7 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 
 def get_files(directory: pathlib.Path):
-    files = pickle.load(open(r"C:\Users\z0048drc\Desktop\fastmri\dataset_cache.pkl", 'rb'))
+    files = pickle.load(open(directory, 'rb'))
     keys = list(files.keys())
 
     return np.array(files[keys[-1]])
@@ -35,6 +35,7 @@ def center_crop(data: np, shape: Tuple[int, int]) -> np:
 
 
 def save_sens_map(fname, sens_map):
+
     sens_map_pkl_path = pathlib.Path(f"Sens_maps/{fname}_sens_map.pkl")
 
     pickle.dump(sens_map, open(sens_map_pkl_path, 'wb'))
