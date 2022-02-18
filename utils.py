@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import torch
 from typing import Tuple
-import sigpy.plot as pl
+import cupy as cp
 import matplotlib.pyplot as plt
 import torch.fft
 import matplotlib.colors as colors
@@ -36,7 +36,7 @@ def center_crop(data: np, shape: Tuple[int, int]) -> np:
 
 def save_sens_map(fname, sens_map, sub_folder):
 
-    sens_map_pkl_path = pathlib.Path(f"/Results/{sub_folder}/Sens_maps")
+    sens_map_pkl_path = pathlib.Path(f"Results/{sub_folder}/Sens_maps")
     sens_map_pkl_path.mkdir(exist_ok=True, parents=True)
     sens_map_pkl_path = sens_map_pkl_path / f"{fname}_sens_map.pkl"
 
@@ -57,10 +57,11 @@ def save_recon(fname, CG_SENSE, ground_truth, sub_folder):
     GT_path = pathlib.Path(f"Recon/{sub_folder}/GT")
     GT_path.mkdir(exist_ok=True, parents=True)
     gt_path = GT_path / f"{fname}_GT.pkl"
-    pickle.dump(ground_truth, open(gt_path, 'wb'))
+    pickle.dump(ground_truth['ground_truth'], open(gt_path, 'wb'))
 
 
 def imsave(obj, path):
+    obj = cp.asnumpy(obj)
     f, a = plt.subplots(1, 1)
     a.imshow(abs(obj), cmap='gray')
     a.axis('off')

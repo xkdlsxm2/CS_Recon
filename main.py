@@ -1,4 +1,4 @@
-import pathlib
+import pathlib, os
 import sigpy as sp
 import sigpy.mri as mr
 import sigpy.plot as pl
@@ -7,12 +7,16 @@ import h5py
 from transform import apply_mask, to_tensor
 from subsample import create_mask_for_mask_type
 
+os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1"
+
 DATA_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\fastmri\dataset_cache.pkl")
+# DATA_PATH = pathlib.Path(r"/home/hpc/iwbi/iwbi002h/fastMRI/fastMRI/dataset_cache.pkl")
 CROP_SIZE = (320, 320)
 NUM_LOG_IMAGES = 16
 MASK_TYPE = "equispaced"
-ACCELERATION = 2
-NUM_LOW_FREQUENCIES = 32
+ACCELERATION = 4
+NUM_LOW_FREQUENCIES = 24
+MAX_ITER = 10
 
 if __name__ == "__main__":
     files = get_files(DATA_PATH)
@@ -44,24 +48,13 @@ if __name__ == "__main__":
                   "max_val": attrs["max"]}
         input_k = kdata_torch2numpy(kspace_us)
 
-        sens_map_pkl_path = pathlib.Path(f"Sens_maps/{name}_sens_map.pkl")
+        sub_folder = f"R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}"
+        sens_map_pkl_path = pathlib.Path(f"Results/{sub_folder}/Sens_maps/{name}_sens_map.pkl")
         if sens_map_pkl_path.exists():
             print(f"{name}_sens_map is already processed!")
             sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
         else:
             print("Start to estimate sens_map...")
-            sens_map = mr.app.EspiritCalib(input_k).run()
-            save_sens_map(name, sens_map, sub_folder=f"R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}")
+            sens_map = mr.app.EspiritCalib(input_k, device=sp.Device(0)).run()
+            save_sens_map(name, sens_map, sub_folder=sub_folder)
             print("Estimate sens_map done...")
-
-        recon_pkl_path = pathlib.Path(f"Recon/pkl/{name}_CG-SENSE.pkl")
-        if recon_pkl_path.exists():
-            print(f"{name}_CG-SENSE is already processed!\n\n")
-
-        else:
-            print("Start to reconstruction...")
-            sense_recon = mr.app.SenseRecon(input_k.copy(), sens_map.copy(), lamda=0.01).run()
-            sense_recon = center_crop(sense_recon, CROP_SIZE)
-            save_recon(name, sense_recon, gt, sub_folder=f"R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}")
-            print("Recon done...")
-            print(f"{name} done!\n\n")
