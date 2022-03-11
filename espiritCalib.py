@@ -12,9 +12,9 @@ os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v
 
 DATA_CACHE_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\dataset_cache_local.pkl")
 # DATA_CACHE_PATH = pathlib.Path(r"/home/hpc/iwbi/iwbi002h/fastMRI/fastMRI/dataset_cache_server.pkl")
-DATA_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\data_fm\knee_from_val_test\multicoil_val")
-SENS_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results\sens_maps_local")
-DATASET = "val"  # "train", "val", "test"
+DATASET = "test"  # "train", "val", "test"
+DATA_PATH = pathlib.Path(rf"C:\Users\z0048drc\Desktop\data_fm\knee_from_val_test\multicoil_{DATASET}")
+SENS_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results\sens_maps_local\TH0")
 MASK_TYPE = "equispaced"
 ACCELERATION = 4
 NUM_LOW_FREQUENCIES = 24
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
         else:
             print("Start to estimate sens_map...")
-            sens_map = mr.app.EspiritCalib(input_k, device=sp.Device(0)).run()
+            sens_map = mr.app.EspiritCalib(input_k, device=sp.Device(0), thresh=0.0).run()
             sens_map_tensor = to_tensor(sens_map.get())
             save_sens_map(name, sens_map_tensor, path=SENS_PATH)
             print("Estimate sens_map done...")

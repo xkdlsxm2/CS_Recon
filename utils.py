@@ -7,7 +7,7 @@ import cupy as cp
 import matplotlib.pyplot as plt
 import torch.fft
 import matplotlib.colors as colors
-from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+#from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 
 def get_files(directory: pathlib.Path):
@@ -43,14 +43,14 @@ def save_sens_map(fname, sens_map, sub_folder):
     pickle.dump(sens_map, open(sens_map_pkl_path, 'wb'))
 
 
-def save_recon(fname, CG_SENSE, ground_truth, sub_folder):
-    recon_pkl_path = pathlib.Path(f"Results/{sub_folder}/Recon/pkl")
-    recon_png_path = pathlib.Path(f"Results/{sub_folder}/Recon/png")
+def save_recon(fname, CG_SENSE, ground_truth, sub_folder, recon):
+    recon_pkl_path = pathlib.Path(f"{sub_folder}/Recon/pkl")
+    recon_png_path = pathlib.Path(f"{sub_folder}/Recon/png")
     recon_pkl_path.mkdir(exist_ok=True, parents=True)
     recon_png_path.mkdir(exist_ok=True, parents=True)
 
-    pkl_path = recon_pkl_path / f"{fname}_CG-SENSE.pkl"
-    png_path = recon_png_path / f"{fname}_CG-SENSE.png"
+    pkl_path = recon_pkl_path / f"{fname}_{recon}.pkl"
+    png_path = recon_png_path / f"{fname}_{recon}.png"
     pickle.dump(CG_SENSE, open(pkl_path, 'wb'))
     imsave(CG_SENSE, png_path)
 
@@ -67,7 +67,7 @@ def imsave(obj, path):
     a.axis('off')
     figure = plt.gcf()  # get current figure
     figure.set_size_inches(28, 14)
-    plt.savefig(path, bbox_inches='tight')
+    plt.savefig(path, bbox_inches='tight', pad_inches=0)
     plt.close()
 
 def fft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
@@ -277,7 +277,7 @@ def imshow1row(imgs, titles=None, isMag=True, filename=None, log=False, suptitle
         plt.savefig(filename, bbox_inches='tight')
     plt.close(f)
 
-
+'''
 def ssim(
     gt: np.ndarray, pred: np.ndarray, maxval=None) -> np.ndarray:
     """Compute Structural Similarity Index Metric (SSIM)"""
@@ -295,3 +295,4 @@ def ssim(
         )
 
     return ssim / gt.shape[0]
+'''

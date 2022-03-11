@@ -10,17 +10,27 @@ from subsample import create_mask_for_mask_type
 os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1"
 
 DATA_CACHE_PATH = pathlib.Path(r"dataset_cache_local.pkl")
-SENS_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results\sens_maps_local")
+SENS_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results\sens_maps_local\TH0")
 RECON_SAVE_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results")
 CROP_SIZE = (320, 320)
 NUM_LOG_IMAGES = 16
 MASK_TYPE = "equispaced"
-ACCELERATION = 4
+ACCELERATION = 1
 NUM_LOW_FREQUENCIES = 24
 MAX_ITER = 10
-RECON = ["CS-SENSE", "CG-SENSE"]
-DATASET = "test"
+RECON = ["CS-SENSE"]
+DATASET = "train"
 
+def save_recon(fname, CG_SENSE, sub_folder, recon):
+    recon_pkl_path = pathlib.Path(f"{sub_folder}/Recon/pkl")
+    recon_png_path = pathlib.Path(f"{sub_folder}/Recon/png")
+    recon_pkl_path.mkdir(exist_ok=True, parents=True)
+    recon_png_path.mkdir(exist_ok=True, parents=True)
+
+    pkl_path = recon_pkl_path / f"{fname}_{recon}.pkl"
+    png_path = recon_png_path / f"{fname}_{recon}.png"
+    pickle.dump(CG_SENSE, open(pkl_path, 'wb'))
+    imsave(CG_SENSE, png_path)
 
 def get_files(directory: pathlib.Path, dataset):
     if os.name == 'nt':  # for Windows, there is no PosixPath.
@@ -67,8 +77,6 @@ if __name__ == "__main__":
 
                 kspace_us = apply_mask(kspace_torch, mask, seed=seed)
 
-                gt = {"ground_truth": to_tensor(target),
-                      "max_val": attrs["max"]}
             input_k = kdata_torch2numpy(kspace_us)
 
             sub_folder = f"R{ACCELERATION}C{NUM_LOW_FREQUENCIES}"
@@ -96,6 +104,6 @@ if __name__ == "__main__":
                     sense_recon = mr.app.SenseRecon(input_k.copy(), sens_map.copy(), lamda=0.01,
                                                     device=sp.Device(0)).run()
                 sense_recon = center_crop(sense_recon, CROP_SIZE)
-                save_recon(name, sense_recon, gt, sub_folder=sub_folder, recon=recon)
+                save_recon(name, sense_recon, sub_folder=sub_folder, recon=recon)
                 print("Recon done...")
                 print(f"{name} done!\n\n")
