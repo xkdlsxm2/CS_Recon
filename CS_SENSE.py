@@ -15,11 +15,12 @@ RECON_SAVE_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results")
 CROP_SIZE = (320, 320)
 NUM_LOG_IMAGES = 16
 MASK_TYPE = "equispaced"
-ACCELERATION = 1
+ACCELERATION = 4
 NUM_LOW_FREQUENCIES = 24
 MAX_ITER = 10
 RECON = ["CS-SENSE"]
 DATASET = "train"
+
 
 def save_recon(fname, CG_SENSE, sub_folder, recon):
     recon_pkl_path = pathlib.Path(f"{sub_folder}/Recon/pkl")
@@ -31,6 +32,7 @@ def save_recon(fname, CG_SENSE, sub_folder, recon):
     png_path = recon_png_path / f"{fname}_{recon}.png"
     pickle.dump(CG_SENSE, open(pkl_path, 'wb'))
     imsave(CG_SENSE, png_path)
+
 
 def get_files(directory: pathlib.Path, dataset):
     if os.name == 'nt':  # for Windows, there is no PosixPath.
@@ -56,6 +58,7 @@ if __name__ == "__main__":
         SENS_PATH = SENS_PATH / DATASET
 
         indices = list(np.linspace(0, len(files), NUM_LOG_IMAGES).astype(int))[:-1]
+        indices = range(len(files))
         for index in indices:
             fname, dataslice, metadata = files[index]
             name = f"{str(index)}_{fname.stem}_R{ACCELERATION}_C{NUM_LOW_FREQUENCIES}"
@@ -86,12 +89,12 @@ if __name__ == "__main__":
                 sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
             else:
                 print("Start to estimate sens_map...")
-                sens_map = mr.app.EspiritCalib(input_k, device=sp.Device(0), thresh=0.0).run()
+                sens_map = mr.app.EspiritCalib(input_k, device=sp.Device(0)).run()
                 save_sens_map(name, sens_map, sub_folder=sub_folder)
                 print("Estimate sens_map done...")
 
             sub_folder = RECON_SAVE_PATH / sub_folder
-            recon_pkl_path = sub_folder / f"Recon/pkl/{name}_{recon}.pkl"
+            recon_pkl_path = sub_folder / DATASET / f"Recon/pkl/{name}_{recon}.pkl"
             if recon_pkl_path.exists():
                 print(f"{name}_{recon} is already processed!\n\n")
 
