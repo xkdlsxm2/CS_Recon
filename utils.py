@@ -40,7 +40,7 @@ def save_sens_map(fname, sens_map, sub_folder):
     sens_map_pkl_path.mkdir(exist_ok=True, parents=True)
     sens_map_pkl_path = sens_map_pkl_path / f"{fname}_sens_map.pkl"
 
-    pickle.dump(sens_map, open(sens_map_pkl_path, 'wb'))
+    pickle.dump(cp.asnumpy(sens_map), open(sens_map_pkl_path, 'wb'))
 
 
 def save_recon(fname, CG_SENSE, ground_truth, sub_folder, recon):

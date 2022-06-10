@@ -9,15 +9,20 @@ from subsample import create_mask_for_mask_type
 
 os.environ["CUDA_PATH"] = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.1"
 RECON_SAVE_PATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\CS_recon\Results\MRCP")
+# RECON_SAVE_PATH = pathlib.Path(r"/home/woody/iwbi/iwbi002h/CG-SENSE/mrcp_sens_maps")
 DPATH = pathlib.Path(r"C:\Users\z0048drc\Desktop\data_fm\MRCP")
-DNAME = [pathlib.Path(r"meas_MID00062_FID07837_t2_space_cor_p3_trig_384_iso-RO_half_FTz_center.h5"),
-         pathlib.Path(r"meas_MID00062_FID07837_t2_space_cor_p3_trig_384_iso-RO_half_FTz.h5")]
-
-
+# DPATH = pathlib.Path(r"/home/woody/iwbi/iwbi002h/mrcp/data")
+DNAME = [pathlib.Path(r"meas_MID00062_FID07837_t2_space_cor_p3_trig_384_iso-RO_half_center_FTz.h5")]
 
 CROP_SIZE = (704, 300)
 RECON = ["CS-SENSE"]
 
+
+def save_sens_map(fname, sens_map, sub_folder):
+    sub_folder.mkdir(exist_ok=True, parents=True)
+    sub_folder = sub_folder / f"{fname}_sens_map.pkl"
+
+    pickle.dump(cp.asnumpy(sens_map), open(sub_folder, 'wb'))
 
 def save_recon(fname, recon_img, sub_folder, recon_type="CS"):
     recon_pkl_path = sub_folder / 'pkl'
@@ -70,7 +75,7 @@ if __name__ == "__main__":
                 sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
             else:
                 print("Start to estimate sens_map...")
-                sens_map = mr.app.EspiritCalib(kspace_z, device=sp.Device(0)).run()
+                sens_map = mr.app.EspiritCalib(kspace_z, device=sp.Device(0), thresh=0.0).run()
                 save_sens_map(name, sens_map, sub_folder=sub_folder)
                 print("Estimate sens_map done...")
 
