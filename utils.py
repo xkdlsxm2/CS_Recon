@@ -2,9 +2,6 @@ import pickle, plot
 import cupy as cp
 import matplotlib.pyplot as plt
 
-def reduce_size(kspace):
-    ncoil, kx, ky, nz = kspace.shape
-
 
 def save_result(fname, result, sub_folder, type="CS"):
     recon_pkl_path = sub_folder / 'pkl' / type
