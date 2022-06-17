@@ -1,0 +1,16 @@
+{
+  "path": {
+    "save_path": "C:\\Users\\z0048drc\\Desktop\\temp",
+    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\processed",
+    "data_name": "meas_MID00052_FID02811_t2_space_cor_p3_trig_384_iso_processed.h5",
+    "__data_name": [null, "???.h5"]
+  },
+  "recon": {
+    "ESPIRiT_threshold": 0.02,
+    "CS_lambda": 3E-6
+  },
+
+  "data": {
+    "reduce_size": true
+  }
+}
