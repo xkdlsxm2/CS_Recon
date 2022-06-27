@@ -94,7 +94,7 @@ def build_args(config_json):
 
 
 def run_cs():
-    config = json.load(open("config.json"))
+    config = json.load(open(pathlib.Path(__file__).parent / "config.json"))
     args = build_args(config)
     cs(args)
 
