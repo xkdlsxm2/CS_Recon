@@ -1,9 +1,12 @@
-import os, pickle, json, h5py, pathlib
+import os, json, h5py, pathlib
+
+import torch
 import sigpy as sp
 import sigpy.mri as mr
 import numpy as np
 from argparse import ArgumentParser
-from utils import save_result
+
+import utils
 
 
 def cs(args):
@@ -14,35 +17,42 @@ def cs(args):
 
         kspace = kspace.astype(np.complex64)
         ncoil, kx, ky, nz = kspace.shape
+        sens_maps = torch.zeros((nz, ncoil, kx, ky, 2)) # to store all sens_maps
+
         for dataslice in range(nz):
             folderName = args.save_path / dname.stem
-            folderName.mkdir(exist_ok=True, parents=True)
 
             name = f"{fname.stem}_{dataslice}"
             print(f"{name} start!")
             kspace_z = kspace[:, :, :, dataslice]
 
             sub_folder = folderName
-            sens_map_pkl_path = sub_folder / "Sens_maps" / f"{name}_sens_map.pkl"
+            sens_map_pkl_path = sub_folder.parent / 'SensMaps' / f"{sub_folder.stem}_sens_maps.h5"
             if sens_map_pkl_path.exists():
-                print(f"{name}_sens_map is already processed!")
-                sens_map = pickle.load(open(sens_map_pkl_path, 'rb'))
+                print(f"{sub_folder.stem}_sens_map.h5 is already exist!")
+                with h5py.File(sens_map_pkl_path, "r") as hf:
+                    sens_map = hf["sens_maps"][dataslice]
+                sens_map = sens_map[...,0] + sens_map[...,1]*1j
             else:
                 print("Start to estimate sens_map...")
                 sens_map = mr.app.EspiritCalib(kspace_z, device=sp.Device(0), thresh=args.ESPIRiT_threshold).run()
-                save_result(name, sens_map, sub_folder=sub_folder, type="Sens_maps")
+                sens_map_tensor = utils.to_tensor(sens_map)
+                sens_maps[dataslice] = sens_map_tensor
                 print("Estimate sens_map done...")
 
-            recon_pkl_path = sub_folder / "CS" / f"{name}_CS.pkl"
+            recon_pkl_path = sub_folder.parent / f'CS_pkl' / sub_folder.stem / f"{name}_CS.pkl"
             if recon_pkl_path.exists():
                 print(f"{name}_CS is already processed!")
             else:
                 print("Start to reconstruction...")
                 sense_recon = mr.app.L1WaveletRecon(kspace_z.copy(), sens_map.copy(), lamda=args.CS_lambda,
                                                     device=sp.Device(0)).run()
-                save_result(name, sense_recon, sub_folder=sub_folder)
+                utils.save_result(name, sense_recon, sub_folder=sub_folder)
                 print("Recon done...")
             print(f"{name} done!\n\n")
+
+        else:
+            utils.save_sens_maps(sens_maps, sub_folder)
 
 
 def build_args(config_json):
@@ -78,13 +88,6 @@ def build_args(config_json):
         type=float,
         default=config["CS_lambda"],
         help='CS_lambda')
-
-    config = config_json['data']
-    parser.add_argument(
-        '--reduce_size',
-        type=bool,
-        default=config["reduce_size"],
-        help='whether to reduce the data size fo running the code on the local laptop')
 
     args = parser.parse_args()
     args.data_name = [pathlib.Path(i) for i in os.listdir(args.data_path)] if args.data_name is None \
