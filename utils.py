@@ -4,8 +4,12 @@ import matplotlib.pyplot as plt
 
 
 def save_result(fname, result, sub_folder, type="CS"):
-    recon_pkl_path = sub_folder / 'pkl' / type
-    recon_png_path = sub_folder / 'png' / type
+    if type == "Sens_maps":
+        recon_pkl_path = sub_folder.parent / 'SensMaps_pkl' / sub_folder.stem
+    else:
+        recon_pkl_path = sub_folder.parent / f'{type}_pkl' / sub_folder.stem
+
+    recon_png_path = sub_folder.parent / f'pngs' / sub_folder.stem / type
     recon_pkl_path.mkdir(exist_ok=True, parents=True)
     recon_png_path.mkdir(exist_ok=True, parents=True)
 
