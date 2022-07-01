@@ -1,8 +1,8 @@
 {
   "path": {
-    "save_path": "C:\\Users\\z0048drc\\Desktop\\temp",
-    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\processed",
-    "data_name": "meas_MID00052_FID02811_t2_space_cor_p3_trig_384_iso_processed.h5",
+    "save_path": "X:\\data\\mrcp\\data",
+    "data_path": "X:\\data\\mrcp\\data",
+    "data_name": "MID00052_FID02811.h5",
     "__data_name": [null, "???.h5"]
   },
   "recon": {
