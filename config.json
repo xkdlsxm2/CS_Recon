@@ -1,8 +1,8 @@
 {
   "path": {
     "save_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP",
-    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\temp\\train\\multicoil_test",
-    "data_name": "MID00052_FID02811.h5",
+    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\train\\multicoil_test",
+    "data_name": "MID00204_FID02139.h5",
     "__data_name": [null, "???.h5"]
   },
   "recon": {
