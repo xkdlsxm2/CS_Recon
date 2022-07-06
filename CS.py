@@ -90,7 +90,14 @@ def build_args(config_json):
         help='CS_lambda')
 
     args = parser.parse_args()
-    args.data_name = [pathlib.Path(i) for i in os.listdir(args.data_path)] if args.data_name is None \
+    data_path = args.data_path
+    slurm_job_id = os.environ.get('SLURM_JOB_ID')
+    slurm_job_id = "." if slurm_job_id == None else f"{slurm_job_id}.tinygpu"
+
+    data_path = data_path.parent / slurm_job_id / data_path.name
+
+    args.data_path = data_path
+    args.data_name = [pathlib.Path(i) for i in os.listdir(data_path)] if args.data_name is None \
         else [pathlib.Path(args.data_name)]
 
     return args
