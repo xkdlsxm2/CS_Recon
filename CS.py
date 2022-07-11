@@ -10,6 +10,7 @@ import utils
 
 
 def cs(args):
+    SENS_EXIST = False
     for dname in args.data_name:
         fname = args.data_path / dname
         with h5py.File(fname, "r") as hf:
@@ -30,6 +31,7 @@ def cs(args):
             sens_map_pkl_path = sub_folder.parent / 'SensMaps' / f"{sub_folder.stem}_sens_maps.h5"
             if sens_map_pkl_path.exists():
                 print(f"{sub_folder.stem}_sens_map.h5 is already exist!")
+                SENS_EXIST = True
                 with h5py.File(sens_map_pkl_path, "r") as hf:
                     sens_map = hf["sens_maps"][dataslice]
                 sens_map = sens_map[...,0] + sens_map[...,1]*1j
@@ -52,7 +54,8 @@ def cs(args):
             print(f"{name} done!\n\n")
 
         else:
-            utils.save_sens_maps(sens_maps, sub_folder)
+            if not SENS_EXIST:
+                utils.save_sens_maps(sens_maps, sub_folder)
 
 
 def build_args(config_json):
