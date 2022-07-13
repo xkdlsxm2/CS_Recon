@@ -22,15 +22,9 @@ class Grappa:
 
         chans, rows, cols, dims = masked_kspace.shape
 
-        mask_ = np.array(mask.cpu().detach())
-        slices = np.ma.clump_masked(np.ma.masked_where(mask_, mask_))
-        acs_ind = [(s.start, s.stop - 1) for s in slices if s.start < (s.stop - 1)]
-        assert (acs_ind != [] or len(
-            acs_ind) > 1), "Couldn't extract center lines mask from k-space - is there pat2 undersampling?"
-        acs_start = acs_ind[0][0]
-        acs_end = acs_ind[0][1]
-
+        acs_start, acs_end = utils.get_acs_index(mask)
         acs = masked_kspace[:, :, acs_start:acs_end + 1, :]
+
         acs_masked1 = acs.detach().clone()
         acs_masked2 = acs.detach().clone()
         acs_masked3 = acs.detach().clone()
@@ -97,13 +91,15 @@ def GRAPPA(dname, args):
     with h5py.File(dname, 'r') as data:
         kspace = utils.to_tensor(data['kspace'][()]).permute(-2, 0, 1, 2, -1)
 
+    kspace = utils.undersample(kspace, rate=args.rate)
+
     mask = utils.create_mask(kspace)
     print(f'    - {dname.stem}')
 
     mask = mask.to(device)
     recons_kspace = []
     num_coils = kspace.shape[1]
-    grappa = Grappa(5, num_coils=num_coils, device=device)
+    grappa = Grappa(args.kernel_size, num_coils=num_coils, device=device)
 
     for slice_i in tqdm(range(kspace.shape[0])):
         grappa.reset()

@@ -177,7 +177,7 @@ def create_mask(kspace):
     return to_tensor(mask)
 
 
-def chose_method(args):
+def choose_method(args):
     if args.method == "cs":
         return CS
     elif args.method == "grappa":
@@ -186,3 +186,52 @@ def chose_method(args):
         raise "Method should be either 'cs' or 'grappa'!"
 
 
+def undersample(kspace, rate=3):
+    '''
+
+    :param kspace: kspace to be undersampled
+    :param rate: Rate of undersample (MRCP data is already PAT3, so default value for the rate is 3)
+    :return:
+        kspace_us: Undersampled kspace
+    '''
+
+    was_torch = False
+    if torch.is_tensor(kspace):
+        kspace = torch.view_as_complex(kspace)
+        kspace = kspace.detach().cpu().numpy()
+        was_torch = True
+
+    mask = kspace[0, 0, 0, :].astype(bool)
+    acs_start, acs_end = get_acs_index(mask)
+    acs = kspace[:, :, :, acs_start:acs_end + 1]
+
+    kspace_us = undersample_(kspace, rate)
+    kspace_us[:, :, :, acs_start:acs_end + 1] = acs
+
+    if was_torch:
+        kspace_us = to_tensor(kspace_us)
+
+    return kspace_us
+
+
+def get_acs_index(mask):
+    if torch.is_tensor(mask):
+        mask = np.array(mask.cpu().detach())
+    slices = np.ma.clump_masked(np.ma.masked_where(mask, mask))
+    acs_ind = [(s.start, s.stop - 1) for s in slices if s.start < (s.stop - 1)]
+    assert (acs_ind != [] or len(
+        acs_ind) > 1), "Couldn't extract center lines mask from k-space - is there pat2 undersampling?"
+    acs_start = acs_ind[0][0]
+    acs_end = acs_ind[0][1]
+
+    return acs_start, acs_end
+
+
+def undersample_(kspace, rate):
+    # Since mrcp is already PAT3, so just divide the rate by 3
+    idx = np.where(kspace[0, 0, 0, :].astype(bool))[0][::rate//3]
+
+    kspace_us = np.zeros_like(kspace)
+    kspace_us[:, :, :, idx] = kspace[:, :, :, idx]
+
+    return kspace_us

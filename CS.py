@@ -9,17 +9,17 @@ def CS(dname, args):
     SENS_EXIST = False
     with h5py.File(dname, "r") as hf:
         kspace = hf["kspace"][:]
+        kspace = np.transpose(kspace, axes=(3, 0, 1, 2))
+
+    kspace = utils.undersample(kspace, args.rate)
 
     kspace = kspace.astype(np.complex64)
-    ncoil, kx, ky, nz = kspace.shape
-    sens_maps = torch.zeros((nz, ncoil, kx, ky, 2))  # to store all sens_maps
+    sens_maps = torch.zeros((*kspace.shape, 2))  # to store all sens_maps
     sub_folder = args.save_path / dname.stem
 
-    for dataslice in range(nz):
-
+    for dataslice, kspace_z in enumerate(kspace):
         name = f"{dname.stem}_{dataslice}"
         print(f"{name} start!")
-        kspace_z = kspace[:, :, :, dataslice]
 
         sens_map_pkl_path = sub_folder.parent / 'SensMaps' / f"{sub_folder.stem}_sens_maps.h5"
         if sens_map_pkl_path.exists():
