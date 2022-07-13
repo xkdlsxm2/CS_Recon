@@ -1,10 +1,10 @@
 import os, json, pathlib, re, utils
 from argparse import ArgumentParser
 
-PATTERN = re.compile("MID\d{5}_FID\d{5}.h5")
+PATTERN = re.compile("MID\d{5}_FID\d{5}.h5") # File name: MIDxxxxx_FIDxxxxx.h5 (x=int)
 
 def recon(args):
-    method = utils.chose_method(args)
+    method = utils.choose_method(args)
     for root, dir, files in os.walk(args.data_path):
         for file in files:
             m = PATTERN.match(file)
@@ -46,6 +46,13 @@ def build_args(config_json):
         help='Reconstruction method')
 
     parser.add_argument(
+        '--rate',
+        type=int,
+        default=config["undersamping_rate"],
+        help='Undersamping_rate')
+
+    config = config_json['cs']
+    parser.add_argument(
         '--ESPIRiT_threshold',
         type=float,
         default=config["ESPIRiT_threshold"],
@@ -56,6 +63,13 @@ def build_args(config_json):
         type=float,
         default=config["CS_lambda"],
         help='CS_lambda')
+
+    config = config_json['grappa']
+    parser.add_argument(
+        '--kernel_size',
+        type=int,
+        default=config["kernel_size"],
+        help='kernel_size for weigh estimation')
 
     args = parser.parse_args()
     data_path = args.data_path
