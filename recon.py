@@ -13,7 +13,7 @@ def recon(args):
                 if args.data_name is None:  # Processing for all dataset
                     method(file, args)
                 else:  # Processing for specific dataset
-                    if file in args.data_name:
+                    if file.name in args.data_name:
                         method(file, args)
 
 

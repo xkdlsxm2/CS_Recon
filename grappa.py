@@ -105,8 +105,7 @@ def GRAPPA(dname, args):
     num_coils = kspace.shape[1]
     grappa = Grappa(5, num_coils=num_coils, device=device)
 
-    # for slice_i in tqdm(range(kspace.shape[0])):
-    for slice_i in tqdm(range(2)):
+    for slice_i in tqdm(range(kspace.shape[0])):
         grappa.reset()
         grappa.fit_weights(kspace[slice_i], mask)
         recons_kspace_slice = grappa.reconstruct(kspace[slice_i].clone().to(device), mask).detach().cpu()
