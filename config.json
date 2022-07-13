@@ -14,5 +14,8 @@
   "cs": {
     "ESPIRiT_threshold": 0.00,
     "CS_lambda": 3E-6
+  },
+  "grappa": {
+    "kernel_size": 5
   }
 }
