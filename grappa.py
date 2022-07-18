@@ -89,7 +89,7 @@ def GRAPPA(dname, args):
     sub_folder = args.save_path / dname.stem
 
     with h5py.File(dname, 'r') as data:
-        kspace = utils.to_tensor(data['kspace'][()]).permute(-2, 0, 1, 2, -1)
+        kspace = utils.to_tensor(data['kspace'][()])
 
     kspace = utils.undersample(kspace, rate=args.rate)
 
@@ -117,9 +117,3 @@ def GRAPPA(dname, args):
     for dataslice, recon_img in enumerate(recons_img):
         name = f"{dname.stem}_{dataslice}"
         utils.save_result(name, recon_img, sub_folder=sub_folder, recon="GRAPPA")
-
-    # Save MIP
-    h, w = mip.shape
-    mip = np.rot90(mip[:, w // 4 * 1:w // 4 * 3 + 30])
-    path = sub_folder.parent / f'pngs' / sub_folder.stem / "GRAPPA" / f"MIP_GRAPPA_{dname.stem}"
-    utils.imsave(mip, path)

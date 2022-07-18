@@ -53,8 +53,6 @@ def save_result(fname, result, sub_folder, recon):
     pkl_path = recon_pkl_path / f"{fname}_{recon}.pkl"
     png_path = recon_png_path / f"{fname}_{recon}"
 
-    h, w = result.shape
-    result = cp.rot90(result[:, w // 4 * 1:w // 4 * 3 + 30])
     pickle.dump(result, open(pkl_path, 'wb'))
     imsave(result, png_path)
 

@@ -1,13 +1,14 @@
 import os, json, pathlib, re, utils
 from argparse import ArgumentParser
 
-PATTERN = re.compile("MID\d{5}_FID\d{5}.h5") # File name: MIDxxxxx_FIDxxxxx.h5 (x=int)
+PATTERN = re.compile("^MID\d{5}_FID\d{5}(.*).h5$") # File name: MIDxxxxx_FIDxxxxx.h5 (x=int)
 
 def recon(args):
     method = utils.choose_method(args)
     for root, dir, files in os.walk(args.data_path):
         for file in files:
-            m = PATTERN.match(file)
+            # m = PATTERN.match(file)
+            m = True
             if m:
                 file = pathlib.Path(root) / file # convert string to pathlib object
                 if args.data_name is None:  # Processing for all dataset
