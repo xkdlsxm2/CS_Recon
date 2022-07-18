@@ -201,7 +201,8 @@ def undersample(kspace, rate=3):
         kspace = kspace.detach().cpu().numpy()
         was_torch = True
 
-    acs_start, acs_end = get_acs_index(kspace)
+    mask = kspace[0, 0, 0, :].astype(bool)
+    acs_start, acs_end = get_acs_index(mask)
     acs = kspace[:, :, :, acs_start:acs_end + 1]
 
     kspace_us = undersample_(kspace, rate)
@@ -213,8 +214,7 @@ def undersample(kspace, rate=3):
     return kspace_us
 
 
-def get_acs_index(kspace):
-    mask = kspace[0, 0, 0, :].astype(bool)
+def get_acs_index(mask):
     if torch.is_tensor(mask):
         mask = np.array(mask.cpu().detach())
     slices = np.ma.clump_masked(np.ma.masked_where(mask, mask))
