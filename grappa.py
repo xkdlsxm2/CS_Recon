@@ -111,9 +111,15 @@ def GRAPPA(dname, args):
     recons_img = compute_rss(recons_kspace.detach().cpu(), dim=1)
 
     recons_img = recons_img.detach().cpu().numpy()
-    recons_img /= np.max(recons_img, axis=(1, 2))[:, None, None]
+    # recons_img /= np.max(recons_img, axis=(1, 2))[:, None, None]
     mip = np.max(recons_img, axis=0)
 
     for dataslice, recon_img in enumerate(recons_img):
         name = f"{dname.stem}_{dataslice}"
         utils.save_result(name, recon_img, sub_folder=sub_folder, recon="GRAPPA")
+
+    # Save MIP
+    h, w = mip.shape
+    mip = np.rot90(mip[:, w // 4 * 1:w // 4 * 3 + 30])
+    path = sub_folder.parent / f'pngs' / sub_folder.stem / "GRAPPA" / f"MIP_GRAPPA_{dname.stem}"
+    utils.imsave(mip, path)

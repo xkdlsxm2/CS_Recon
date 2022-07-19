@@ -2,7 +2,7 @@
   "path": {
     "save_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\knee_from_val_test\\tmp",
     "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\knee_from_val_test\\multicoil_train",
-    "data_name": ["file1000012_orig.h5"],
+    "data_name": ["file1000012_x2.h5"],
     "__data_name": [null, ["???.h5", "???.h5"]]
   },
   "recon": {
