@@ -58,8 +58,8 @@ def save_result(fname, result, sub_folder, recon):
     with open(npy_path, 'wb') as f:
         np.save(f, result)
     for i, img in enumerate(result):
-        png_path = png_path.parent / (png_path.stem+f"_{i}")
-        imsave(img, png_path)
+        path = png_path.parent / (png_path.stem+f"_{i}")
+        imsave(img, path)
 
 
 def imsave(obj, path):
