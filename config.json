@@ -1,15 +1,15 @@
 {
   "path": {
     "save_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\tmp",
-    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\PF_x\\data",
-    "data_name": ["MID00168_FID00165.h5"],
+    "data_path": "C:\\Users\\z0048drc\\Desktop\\data_fm\\MRCP\\PF_o\\data",
+    "data_name": ["MID00204_FID02139.h5"],
     "__data_name": [null, ["???.h5", "???.h5"]]
   },
   "recon": {
-    "method": "cs",
+    "method": ["cs","grappa"],
     "__method": ["cs","grappa"],
-    "undersamping_rate": 3,
-    "__undersamping_rate": "Rate should be a multiply number of 3"
+    "undersamping_rates": [9,12,15],
+    "__undersamping_rates": "Rate should be a multiply number of 3"
   },
   "cs": {
     "ESPIRiT_threshold": 0.00,
