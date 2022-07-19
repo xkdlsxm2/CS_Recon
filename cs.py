@@ -42,6 +42,6 @@ def CS(dname, args):
         print(f"    - {name} done!\n\n")
     else:
         recons = abs(np.stack(recons))
-        utils.save_result(dname.stem, recons, sub_folder=sub_folder, recon="CS")
+        utils.save_result(dname.stem, recons, sub_folder=sub_folder, recon="CS", rate=args.rate)
         if not SENS_EXIST:
             utils.save_sens_maps(sens_maps, sub_folder)

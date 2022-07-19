@@ -1,10 +1,10 @@
-import pickle, plot, h5py
+import plot, h5py, os, pathlib
 import cupy as cp
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from cs import CS
 from grappa import GRAPPA
+from argparse import ArgumentParser
 
 
 def to_tensor(data: np.ndarray) -> torch.Tensor:
@@ -44,33 +44,16 @@ def save_sens_maps(sens_maps, sub_folder):
         plot.ImagePlot(sens_map, z=0, save_path=png_path, save_basename='png', hide_axes=True)
 
 
-def save_result(fname, result, sub_folder, recon):
+def save_result(fname, result, sub_folder, recon, rate=3):
     recon_npy_path = sub_folder.parent / f'npys' / sub_folder.stem
-    recon_png_path = sub_folder.parent / f'pngs' / sub_folder.stem / recon
     recon_npy_path.mkdir(exist_ok=True, parents=True)
-    recon_png_path.mkdir(exist_ok=True, parents=True)
 
-    npy_path = recon_npy_path / f"{fname}_{recon}.npy"
-    png_path = recon_png_path / f"{fname}_{recon}"
+    npy_path = recon_npy_path / f"{fname}_{recon}_PAT{rate}.npy"
 
     _, h, w = result.shape
     result = cp.rot90(result[:, :, w // 4 * 1:w // 4 * 3 + 30], axes=(1,2))
     with open(npy_path, 'wb') as f:
         np.save(f, result)
-    for i, img in enumerate(result):
-        path = png_path.parent / (png_path.stem+f"_{i}")
-        imsave(img, path)
-
-
-def imsave(obj, path):
-    obj = cp.asnumpy(obj)
-    f, a = plt.subplots(1, 1)
-    a.imshow(abs(obj), cmap='gray', vmin=0, vmax=1)
-    a.axis('off')
-    figure = plt.gcf()  # get current figure
-    figure.set_size_inches(28, 14)
-    plt.savefig(path, bbox_inches='tight', pad_inches=0)
-    plt.close()
 
 
 def ifft2(data):
@@ -180,10 +163,10 @@ def create_mask(kspace):
     return to_tensor(mask)
 
 
-def choose_method(args):
-    if args.method == "cs":
+def choose_method(method):
+    if method == "cs":
         return CS
-    elif args.method == "grappa":
+    elif method == "grappa":
         return GRAPPA
     else:
         raise "Method should be either 'cs' or 'grappa'!"
@@ -238,3 +221,69 @@ def undersample_(kspace, rate):
     kspace_us[:, :, :, idx] = kspace[:, :, :, idx]
 
     return kspace_us
+
+
+
+def build_args(config_json):
+    parser = ArgumentParser()
+
+    config = config_json['path']
+    parser.add_argument(
+        '--save_path',
+        type=str,
+        default=pathlib.Path(config["save_path"]),
+        help='path to save reconstruction images and pickles')
+
+    parser.add_argument(
+        '--data_path',
+        type=str,
+        default=pathlib.Path(config["data_path"]),
+        help='path to data')
+
+    parser.add_argument(
+        '--data_name',
+        default=config["data_name"],
+        help='data name to be reconstructed (None: all data in the path')
+
+    config = config_json['recon']
+    parser.add_argument(
+        '--method',
+        type=str,
+        default=config["method"],
+        help='Reconstruction method')
+
+    parser.add_argument(
+        '--rates',
+        type=list,
+        default=config["undersamping_rates"],
+        help='Undersamping_rates')
+
+    config = config_json['cs']
+    parser.add_argument(
+        '--ESPIRiT_threshold',
+        type=float,
+        default=config["ESPIRiT_threshold"],
+        help='ESPIRiT_threshold')
+
+    parser.add_argument(
+        '--CS_lambda',
+        type=float,
+        default=config["CS_lambda"],
+        help='CS_lambda')
+
+    config = config_json['grappa']
+    parser.add_argument(
+        '--kernel_size',
+        type=int,
+        default=config["kernel_size"],
+        help='kernel_size for weigh estimation')
+
+    args = parser.parse_args()
+    data_path = args.data_path
+    slurm_job_id = os.environ.get('SLURM_JOB_ID')
+    slurm_job_id = "." if slurm_job_id == None else f"{slurm_job_id}.tinygpu"
+
+    data_path = data_path.parent / slurm_job_id / data_path.name
+    args.data_path = data_path
+
+    return args

@@ -110,4 +110,4 @@ def GRAPPA(dname, args):
     recons_kspace = torch.stack(recons_kspace)
     recons_img = compute_rss(recons_kspace.detach().cpu(), dim=1)
     recons_img = recons_img.detach().cpu().numpy()
-    utils.save_result(dname.stem, recons_img, sub_folder=sub_folder, recon="GRAPPA")
+    utils.save_result(dname.stem, recons_img, sub_folder=sub_folder, recon="GRAPPA", rate=args.rate)
