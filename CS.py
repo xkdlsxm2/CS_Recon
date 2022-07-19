@@ -5,6 +5,7 @@ import sigpy.mri as mr
 import numpy as np
 import utils
 
+
 def CS(dname, args):
     SENS_EXIST = False
     with h5py.File(dname, "r") as hf:
@@ -12,11 +13,11 @@ def CS(dname, args):
         kspace = np.transpose(kspace, axes=(3, 0, 1, 2))
 
     kspace = utils.undersample(kspace, args.rate)
-
     kspace = kspace.astype(np.complex64)
-    sens_maps = torch.zeros((*kspace.shape, 2))  # to store all sens_maps
-    sub_folder = args.save_path / dname.stem
 
+    sens_maps = torch.zeros((*kspace.shape, 2))  # to store all sens_maps
+    recons = list()
+    sub_folder = args.save_path / dname.stem
     for dataslice, kspace_z in enumerate(kspace):
         name = f"{dname.stem}_{dataslice}"
         print(f"{name} start!")
@@ -42,10 +43,11 @@ def CS(dname, args):
             print("Start to reconstruction...")
             sense_recon = mr.app.L1WaveletRecon(kspace_z.copy(), sens_map.copy(), lamda=args.CS_lambda,
                                                 device=sp.Device(0)).run()
-            utils.save_result(name, sense_recon, sub_folder=sub_folder, recon="CS")
+            recons.append(sense_recon)
             print("Recon done...")
         print(f"{name} done!\n\n")
-
     else:
+        recons = abs(np.stack(recons))
+        utils.save_result(dname.stem, recons, sub_folder=sub_folder, recon="CS")
         if not SENS_EXIST:
             utils.save_sens_maps(sens_maps, sub_folder)
