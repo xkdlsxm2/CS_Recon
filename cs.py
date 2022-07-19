@@ -20,8 +20,7 @@ def CS(dname, args):
     sub_folder = args.save_path / dname.stem
     for dataslice, kspace_z in enumerate(kspace):
         name = f"{dname.stem}_{dataslice}"
-        print(f"{name} start!")
-
+        print(f"    - {name} start!")
         sens_map_pkl_path = sub_folder.parent / 'SensMaps' / f"{sub_folder.stem}_sens_maps.h5"
         if sens_map_pkl_path.exists():
             print(f"{sub_folder.stem}_sens_map.h5 is already exist!")
@@ -35,17 +34,12 @@ def CS(dname, args):
             sens_map_tensor = utils.to_tensor(sens_map)
             sens_maps[dataslice] = sens_map_tensor
             print("Estimate sens_map done...")
-
-        recon_pkl_path = sub_folder.parent / f'CS_pkl' / sub_folder.stem / f"{name}_CS.pkl"
-        if recon_pkl_path.exists():
-            print(f"{name}_CS is already processed!")
-        else:
-            print("Start to reconstruction...")
-            sense_recon = mr.app.L1WaveletRecon(kspace_z.copy(), sens_map.copy(), lamda=args.CS_lambda,
-                                                device=sp.Device(0)).run()
-            recons.append(sense_recon)
-            print("Recon done...")
-        print(f"{name} done!\n\n")
+        print("Start to reconstruction...")
+        sense_recon = mr.app.L1WaveletRecon(kspace_z.copy(), sens_map.copy(), lamda=args.CS_lambda,
+                                            device=sp.Device(0)).run()
+        recons.append(sense_recon)
+        print("Recon done...")
+        print(f"    - {name} done!\n\n")
     else:
         recons = abs(np.stack(recons))
         utils.save_result(dname.stem, recons, sub_folder=sub_folder, recon="CS")
