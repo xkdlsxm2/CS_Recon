@@ -45,24 +45,27 @@ def save_sens_maps(sens_maps, sub_folder):
 
 
 def save_result(fname, result, sub_folder, recon):
-    recon_pkl_path = sub_folder.parent / f'{recon}_pkl' / sub_folder.stem
+    recon_npy_path = sub_folder.parent / f'npys' / sub_folder.stem
     recon_png_path = sub_folder.parent / f'pngs' / sub_folder.stem / recon
-    recon_pkl_path.mkdir(exist_ok=True, parents=True)
+    recon_npy_path.mkdir(exist_ok=True, parents=True)
     recon_png_path.mkdir(exist_ok=True, parents=True)
 
-    pkl_path = recon_pkl_path / f"{fname}_{recon}.pkl"
+    npy_path = recon_npy_path / f"{fname}_{recon}.npy"
     png_path = recon_png_path / f"{fname}_{recon}"
 
-    h, w = result.shape
-    result = cp.rot90(result[:, w // 4 * 1:w // 4 * 3 + 30])
-    pickle.dump(result, open(pkl_path, 'wb'))
-    imsave(result, png_path)
+    _, h, w = result.shape
+    result = cp.rot90(result[:, :, w // 4 * 1:w // 4 * 3 + 30], axes=(1,2))
+    with open(npy_path, 'wb') as f:
+        np.save(f, result)
+    for i, img in enumerate(result):
+        png_path = png_path.parent / (png_path.stem+f"_{i}")
+        imsave(img, png_path)
 
 
 def imsave(obj, path):
     obj = cp.asnumpy(obj)
     f, a = plt.subplots(1, 1)
-    a.imshow(abs(obj), cmap='gray')
+    a.imshow(abs(obj), cmap='gray', vmin=0, vmax=1)
     a.axis('off')
     figure = plt.gcf()  # get current figure
     figure.set_size_inches(28, 14)
