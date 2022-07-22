@@ -17,6 +17,7 @@ def CS(dname, args):
 
     sens_maps = torch.zeros((*kspace.shape, 2))  # to store all sens_maps
     recons = list()
+    recon_k = list()
     sub_folder = args.save_path / dname.stem
     for dataslice, kspace_z in enumerate(kspace):
         name = f"{dname.stem}_{dataslice}"
@@ -38,10 +39,13 @@ def CS(dname, args):
         sense_recon = mr.app.L1WaveletRecon(kspace_z.copy(), sens_map.copy(), lamda=args.CS_lambda,
                                             device=sp.Device(0)).run()
         recons.append(sense_recon)
+        utils.save_recon_k_cs(recon_k, sense_recon, sens_map)
         print("Recon done...")
         print(f"    - {name} done!\n\n")
     else:
         recons = abs(np.stack(recons))
+        recon_k = abs(np.stack(recon_k))
         utils.save_result(dname.stem, recons, sub_folder=sub_folder, recon="CS", rate=args.rate)
+        utils.save_result(dname.stem, recon_k, sub_folder=sub_folder, recon="CS", rate=args.rate, is_k=True)
         if not SENS_EXIST:
             utils.save_sens_maps(sens_maps, sub_folder)

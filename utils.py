@@ -5,6 +5,7 @@ import torch
 from cs import CS
 from grappa import GRAPPA
 from argparse import ArgumentParser
+from numpy.fft import fft2, fftshift
 
 
 def to_tensor(data: np.ndarray) -> torch.Tensor:
@@ -44,14 +45,17 @@ def save_sens_maps(sens_maps, sub_folder):
         plot.ImagePlot(sens_map, z=0, save_path=png_path, save_basename='png', hide_axes=True)
 
 
-def save_result(fname, result, sub_folder, recon, rate=3):
+def save_result(fname, result, sub_folder, recon, rate=3, is_k=None):
     recon_npy_path = sub_folder.parent / f'npys' / sub_folder.stem
     recon_npy_path.mkdir(exist_ok=True, parents=True)
 
-    npy_path = recon_npy_path / f"{fname}_{recon}_PAT{rate}.npy"
+    if is_k is None:
+        npy_path = recon_npy_path / f"{fname}_{recon}_PAT{rate}.npy"
+        _, h, w = result.shape
+        result = cp.rot90(result[:, :, w // 4 * 1:w // 4 * 3 + 30], axes=(1,2))
+    else:
+        npy_path = recon_npy_path / f"{fname}_{recon}_PAT{rate}_k.npy"
 
-    _, h, w = result.shape
-    result = cp.rot90(result[:, :, w // 4 * 1:w // 4 * 3 + 30], axes=(1,2))
     with open(npy_path, 'wb') as f:
         np.save(f, result)
 
@@ -69,17 +73,17 @@ def ifft2(data):
         torch.Tensor: The IFFT of the input.
     """
     assert data.size(-1) == 2
-    data = ifftshift(data, dim=(-3, -2))
+    data = ifftshift_(data, dim=(-3, -2))
     data = torch.view_as_real(
         torch.fft.ifftn(  # type: ignore
             torch.view_as_complex(data), dim=(-2, -1), norm="ortho"
         )
     )
-    data = fftshift(data, dim=(-3, -2))
+    data = fftshift_(data, dim=(-3, -2))
     return data
 
 
-def fftshift(x, dim=None):
+def fftshift_(x, dim=None):
     """
     Similar to np.fft.fftshift but applies to PyTorch Tensors
     """
@@ -93,7 +97,7 @@ def fftshift(x, dim=None):
     return roll(x, shift, dim)
 
 
-def ifftshift(x, dim=None):
+def ifftshift_(x, dim=None):
     """
     Similar to np.fft.ifftshift but applies to PyTorch Tensors
     """
@@ -287,3 +291,24 @@ def build_args(config_json):
     args.data_path = data_path
 
     return args
+
+def save_recon_k_cs(recon_k, img, sens_map, smoothing_factor=8):
+    coil_img = img[None, ...] * sens_map
+    coil_k = apply_fft(coil_img[0])
+    coil_k = cp.asnumpy(coil_k)
+    coil_k *= np.expm1(smoothing_factor) / coil_k.max()
+    coil_k = np.log1p(coil_k)
+    coil_k /= coil_k.max()
+    recon_k.append(coil_k)
+
+def apply_fft(img):
+    return fftshift(fft2(fftshift(img)))
+
+
+def grappa_k4save(recon_k, smoothing_factor=8):
+    recon_k = recon_k[..., 0] + 1j * recon_k[..., -1]
+    recon_k = recon_k.cpu().numpy()[:, 0]
+    recon_k *= np.expm1(smoothing_factor) / np.max(recon_k, axis=(1,2))[:, None, None]
+    recon_k = np.log1p(recon_k)
+    recon_k /= np.max(recon_k, axis=(1,2))[:, None, None]
+    return recon_k
