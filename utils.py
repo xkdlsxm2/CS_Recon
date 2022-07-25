@@ -293,6 +293,8 @@ def build_args(config_json):
     return args
 
 def save_recon_k_cs(recon_k, img, sens_map, smoothing_factor=8):
+    img = cp.asnumpy(img)
+    sens_map = cp.asnumpy(sens_map)
     coil_img = img[None, ...] * sens_map
     coil_k = apply_fft(coil_img[0])
     coil_k = cp.asnumpy(coil_k)
