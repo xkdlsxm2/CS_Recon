@@ -6,7 +6,7 @@
     "__data_name": [null, ["???.h5", "???.h5"]]
   },
   "recon": {
-    "method": ["grappa"],
+    "method": ["cs"],
     "__method": ["cs","grappa"],
     "undersamping_rates": [3],
     "__undersamping_rates": "Rate should be a multiply number of 3"
